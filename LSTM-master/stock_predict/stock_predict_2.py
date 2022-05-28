@@ -3,7 +3,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-# 由于
+# 由于本机是tensorflow2 而这里是 tf1 所以使用 tf1 版本语法 禁用 tf2 版本语法
 import tensorflow as tf
 import tensorflow.compat.v1 as tf
 tf.disable_v2_behavior()
@@ -16,20 +16,27 @@ lr = 0.0006  # 学习率
 # ——————————————————导入数据——————————————————————
 f = open('dataset_2.csv')
 df = pd.read_csv(f)  # 读入股票数据
-data = df.iloc[:, 2:10].values  # 取第3-10列
+data = df.iloc[:, 2:10].values  # 读取所有行的 第3-10列 因为数据已经是按照时间顺序排序 所以不用取时间那一列
 
 
 # 获取训练集
+# batch_size 每一次训练的样本数量
+# time_step 理解为时间窗口 每次考虑相邻的20个样本
+# train_begin - train_end 取这些为训练集
 def get_train_data(batch_size=60, time_step=20, train_begin=0, train_end=5800):
     batch_index = []
-    data_train = data[train_begin:train_end]
+    data_train = data[train_begin:train_end]    # 取前5800个样本作为训练集
+    # np.mean 沿指定轴取算数平均值 axis=0 拍扁 对每一列取均值 
+    # np.std  沿指定轴求标准差
     normalized_train_data = (data_train - np.mean(data_train, axis=0)) / np.std(data_train, axis=0)  # 标准化
     train_x, train_y = [], []  # 训练集x和y初定义
     for i in range(len(normalized_train_data) - time_step):
         if i % batch_size == 0:
-            batch_index.append(i)
-        x = normalized_train_data[i:i + time_step, :7]
-        y = normalized_train_data[i:i + time_step, 7, np.newaxis]
+            batch_index.append(i)   # batch_index 里保存每个训练批次第一个数据的索引
+        x = normalized_train_data[i:i + time_step, :7]  # 最后一个不取 为 label
+        # np,newaxis 参考https://blog.csdn.net/lanchunhui/article/details/49725065
+        y = normalized_train_data[i:i + time_step, 7, np.newaxis]   # 使用 np.newaxis 为标签增加一个轴 在Y轴方向表示
+        # 这里注意列表的元素也可能是列表
         train_x.append(x.tolist())
         train_y.append(y.tolist())
     batch_index.append((len(normalized_train_data) - time_step))
@@ -49,6 +56,7 @@ def get_test_data(time_step=20, test_begin=5800):
         y = normalized_test_data[i * time_step:(i + 1) * time_step, 7]
         test_x.append(x.tolist())
         test_y.extend(y)
+    # 再加上最后一组
     test_x.append((normalized_test_data[(i + 1) * time_step:, :7]).tolist())
     test_y.extend((normalized_test_data[(i + 1) * time_step:, 7]).tolist())
     return mean, std, test_x, test_y
@@ -109,7 +117,7 @@ def train_lstm(batch_size=60, time_step=20, train_begin=2000, train_end=5800):
 
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
-        for i in range(10):  # 这个迭代次数，可以更改，越大预测效果会更好，但需要更长时间
+        for i in range(20):  # 这个迭代次数，可以更改，越大预测效果会更好，但需要更长时间
             for step in range(len(batch_index) - 1):
                 _, loss_ = sess.run([train_op, loss], feed_dict={X: train_x[batch_index[step]:batch_index[step + 1]],
                                                                  Y: train_y[batch_index[step]:batch_index[step + 1]],
