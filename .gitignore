@@ -2,3 +2,5 @@
 data/pai_job_table.csv
 *.csv
 *.header
+gpu_claster/darts/models/train7day-split80%-input60-output20-seed42_ptl-ckpt.pth.tar
+gpu_claster/darts/models/train7day-split80%-input60-output20-seed42.pth.tar
