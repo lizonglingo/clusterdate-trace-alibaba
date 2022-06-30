@@ -11,4 +11,4 @@
 - microservice_trace: 对Alibaba的另一个数据集的简单处理，但是最终没有选择使用该数据集。
 - pytorch-forecasting: 尝试了一些预测模型的效果，最终选择了N-BEATS模型。
 
-其中报告涉及到的主要代码在`/gpu_claster/darts/time_forecasting.ipynb`和`/gpu_claster/darts/N-BEATS.ipynb`中。
+其中报告涉及到的主要代码在`/darts/time_forecasting.ipynb`和`/darts/N-BEATS.ipynb`中。
